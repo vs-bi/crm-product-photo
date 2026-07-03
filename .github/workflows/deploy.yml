@@ -1,0 +1,20 @@
+name: Deploy to vs-web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, vs-web, linux]
+    if: github.repository == 'vs-bi/crm-product-photo'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build i redeploy kontenera
+        run: bash deploy/ci-deploy.sh
