@@ -1,0 +1,16 @@
+name: crm_product_photo
+
+services:
+  crm_product_photo:
+    build: .
+    container_name: crm_product_photo
+    restart: unless-stopped
+    env_file: /opt/crm_product_photo/.env
+    environment:
+      - AUTO_START_IMAGE_SERVER=1
+    volumes:
+      - /opt/crm_product_photo/product_images:/app/product_images
+      - /opt/crm_product_photo/logs:/app/logs
+    ports:
+      - "127.0.0.1:8502:8501"
+      - "127.0.0.1:8001:8000"
