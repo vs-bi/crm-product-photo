@@ -19,7 +19,7 @@ from crm_product_images_fetch import (
     fetch_all_products_with_pictures,
     fetch_image_bytes,
     get_token_url,
-    save_as_png,
+    save_as_jpg,
 )
 from image_server import ImageServer
 
@@ -160,7 +160,7 @@ def parse_codes(text):
 def download_one(product, token_url, token_holder, output_dir):
     content, new_token = fetch_image_bytes(product['PictureId'], token_url, token_holder['token'])
     token_holder['token'] = new_token
-    return save_as_png(content, product['Code'], output_dir)
+    return save_as_jpg(content, product['Code'], output_dir)
 
 
 def run_export(product_codes, output_dir, progress_area):
@@ -225,7 +225,7 @@ def render_summary(result):
         f"""
         <div class="tg-metrics">
           <div class="tg-metric"><div class="label">Produkty ze zdjęciami</div><div class="value">{result['total']}</div></div>
-          <div class="tg-metric"><div class="label">Zapisane pliki PNG</div><div class="value">{result['saved']}</div></div>
+          <div class="tg-metric"><div class="label">Zapisane pliki JPG</div><div class="value">{result['saved']}</div></div>
           <div class="{error_class}"><div class="label">Błędy</div><div class="value">{error_count}</div></div>
           <div class="tg-metric"><div class="label">Czas trwania</div><div class="value">{duration}</div></div>
         </div>
@@ -262,7 +262,7 @@ def render_server_section(output_dir_text):
 
     st.divider()
     st.subheader('Hosting zdjęć (HTTP)')
-    st.caption('Udostępnia pliki z folderu docelowego pod adresem http://adres/KOD.png — np. do wyświetlania w Excelu.')
+    st.caption('Udostępnia pliki z folderu docelowego pod adresem http://adres/KOD.jpg — np. do wyświetlania w Excelu.')
 
     if IS_PRODUCTION_HOST:
         st.info(
@@ -270,7 +270,7 @@ def render_server_section(output_dir_text):
             f'(folder: {output_dir_text.strip() or DEFAULT_OUTPUT_DIR}).'
         )
         if PUBLIC_IMAGE_BASE_URL:
-            st.markdown(f'Publiczny adres zdjęć: **{PUBLIC_IMAGE_BASE_URL}/KOD.png**')
+            st.markdown(f'Publiczny adres zdjęć: **{PUBLIC_IMAGE_BASE_URL}/KOD.jpg**')
         return
 
     port = st.number_input('Port serwera', min_value=1, max_value=65535, value=DEFAULT_SERVER_PORT, step=1)
@@ -292,7 +292,7 @@ def render_server_section(output_dir_text):
 
     if server.is_running:
         st.success(f'Serwer działa: {server.base_url}/ (folder: {server.directory})')
-        sample = next(server.directory.glob('*.png'), None)
+        sample = next(server.directory.glob('*.jpg'), None)
         if sample:
             st.markdown(f'Przykładowy link: [{server.base_url}/{sample.name}]({server.base_url}/{sample.name})')
     else:
@@ -314,7 +314,7 @@ def main():
           <img src="data:image/png;base64,{logo_b64}" alt="Trend Glass">
           <div>
             <h1>Eksport zdjęć produktów</h1>
-            <p>Creatio CRM → PNG {core.IMAGE_TARGET_WIDTH}×{core.IMAGE_TARGET_HEIGHT}</p>
+            <p>Creatio CRM → JPG {core.IMAGE_TARGET_WIDTH}×{core.IMAGE_TARGET_HEIGHT}</p>
           </div>
         </div>
         """,

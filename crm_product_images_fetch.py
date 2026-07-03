@@ -31,6 +31,7 @@ MAX_CONCURRENT = 8
 IMAGE_TARGET_WIDTH = 800
 IMAGE_TARGET_HEIGHT = 800
 IMAGE_BACKGROUND_COLOR = (255, 255, 255)
+IMAGE_JPEG_QUALITY = 85
 
 TOKEN_CACHE = {
     'access_token': None,
@@ -232,8 +233,8 @@ def resize_with_letterbox(img):
     return canvas
 
 
-def save_as_png(content, code, output_dir):
-    """Konwertuje binaria obrazu do PNG i zapisuje na dysk."""
+def save_as_jpg(content, code, output_dir):
+    """Konwertuje binaria obrazu do JPEG i zapisuje na dysk."""
     img = Image.open(BytesIO(content))
     if img.mode in ('RGBA', 'LA', 'P'):
         img = img.convert('RGBA')
@@ -243,8 +244,8 @@ def save_as_png(content, code, output_dir):
     img = resize_with_letterbox(img)
 
     safe_code = sanitize_filename(code)
-    out_path = output_dir / f'{safe_code}.png'
-    img.save(out_path, 'PNG')
+    out_path = output_dir / f'{safe_code}.jpg'
+    img.save(out_path, 'JPEG', quality=IMAGE_JPEG_QUALITY, optimize=True)
     return out_path
 
 
@@ -258,7 +259,7 @@ def process_product(product, token_url, access_token_holder, stats, semaphore, p
         try:
             content, new_token = fetch_image_bytes(picture_id, token_url, access_token_holder['token'])
             access_token_holder['token'] = new_token
-            out_path = save_as_png(content, code, OUTPUT_DIR)
+            out_path = save_as_jpg(content, code, OUTPUT_DIR)
             stats['saved'] += 1
             return True, None
         except Exception as e:
@@ -317,7 +318,7 @@ async def main():
 
         with tqdm(
             total=total,
-            desc='Pobieranie PNG',
+            desc='Pobieranie JPG',
             unit=' plik',
             dynamic_ncols=True,
             bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}] {postfix}',
@@ -348,7 +349,7 @@ async def main():
         logger.info('PODSUMOWANIE EKSPORTU ZDJEC')
         logger.info('=' * 60)
         logger.info(f'Produkty ze zdjeciami: {len(products)}')
-        logger.success(f'Zapisane pliki PNG: {stats["saved"]}')
+        logger.success(f'Zapisane pliki JPG: {stats["saved"]}')
         if stats['errors']:
             logger.error(f'Bledy: {stats["errors"]}')
         logger.info(f'Czas wykonania: {datetime.now() - time_s}')

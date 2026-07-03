@@ -1,6 +1,6 @@
 """Lekki serwer HTTP hostujący pobrane zdjęcia produktów.
 
-Serwuje wskazany folder (np. product_images) pod http://<host>:<port>/<plik>.png,
+Serwuje wskazany folder (np. product_images) pod http://<host>:<port>/<plik>.jpg,
 dzięki czemu zdjęcia można linkować np. w Excelu. Oparty wyłącznie na bibliotece
 standardowej; nasłuchuje na 0.0.0.0 (dostęp z sieci LAN, gotowe pod Docker).
 """

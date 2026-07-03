@@ -1,8 +1,8 @@
 # CRM Product Photo
 
-Eksport zdjęć produktów z Creatio CRM do PNG 800×800 oraz hosting HTTP pod linki w Excelu.
+Eksport zdjęć produktów z Creatio CRM do JPG 800×800 oraz hosting HTTP pod linki w Excelu.
 
-**Produkcja:** `http://vs-web/product_photos/` (GUI) · `http://vs-web/crm_product_images/KOD.png` (zdjęcia)
+**Produkcja:** `http://vs-web/product_photos/` (GUI) · `http://vs-web/crm_product_images/KOD.jpg` (zdjęcia)
 
 ## Uruchomienie lokalne
 
@@ -71,7 +71,35 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8502/product_photos/
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8001/
 ```
 
-**Linki do zdjęć w Excelu:** `http://vs-web/crm_product_images/KOD.png` (np. `70056.png`)
+**Linki do zdjęć w Excelu:** `http://vs-web/crm_product_images/KOD.jpg` (np. `70056.jpg`)
+
+**Usunięcie pobranych zdjęć (SSH):**
+
+Zdjęcia leżą na hoście w `/opt/crm_product_photo/product_images/` (wolumen — kontener **nie wymaga** restartu po skasowaniu plików). Po usunięciu linki w Excelu przestaną działać do czasu ponownego eksportu.
+
+```bash
+# Zaloguj się na serwer
+ssh gcieslinski@vs-web
+
+# Podgląd — ile plików i przykładowe nazwy
+ls -la /opt/crm_product_photo/product_images/
+ls /opt/crm_product_photo/product_images/*.jpg 2>/dev/null | wc -l
+
+# Usuń jeden plik po kodzie produktu
+rm /opt/crm_product_photo/product_images/70056.jpg
+
+# Usuń wszystkie pobrane JPG (ostrożnie — bez cofania)
+rm /opt/crm_product_photo/product_images/*.jpg
+
+# Alternatywa: opróżnij folder, zostaw katalog
+find /opt/crm_product_photo/product_images/ -maxdepth 1 -name '*.jpg' -delete
+```
+
+Sprawdzenie, że plik zniknął (oczekiwane **404**):
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8001/70056.jpg
+```
 
 ## Zmienne środowiskowe
 

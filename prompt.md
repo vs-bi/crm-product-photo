@@ -20,7 +20,7 @@ Użyj tego pliku jako promptu systemowego w nowej sesji Cursor. Twoim zadaniem j
 |---------|------------------|
 | Serwer | `vs-web` (`10.0.101.22`), Debian, istniejące kontenery Docker |
 | GUI | `http://vs-web/product_photos/` (**ustalone** — `baseUrlPath = "product_photos"`) |
-| Zdjęcia | `http://vs-web/crm_product_images/KOD.png` (np. `70056.png`) |
+| Zdjęcia | `http://vs-web/crm_product_images/KOD.jpg` (np. `70056.jpg`) |
 | Katalog na hoście | `/opt/crm_product_photo/` |
 | Sekrety | `/opt/crm_product_photo/.env` (poza git) |
 | Zdjęcia (trwałe) | `/opt/crm_product_photo/product_images/` → mount `/app/product_images` w kontenerze |
@@ -55,7 +55,7 @@ Wolumen: `/opt/crm_product_photo/product_images` montowany do `/app/product_imag
 ## Stan wyjściowy projektu
 
 Pliki aplikacji:
-- `crm_product_images_fetch.py` — eksport PNG z Creatio (CLI); **problem:** na sztywno `L:\...` i import `logowanie.py` z `C:\python_module`
+- `crm_product_images_fetch.py` — eksport JPG z Creatio (CLI); **problem:** na sztywno `L:\...` i import `logowanie.py` z `C:\python_module`
 - `app_gui.py` — GUI Streamlit; serwer HTTP startuje ręcznie przyciskiem
 - `image_server.py` — `ThreadingHTTPServer` na `0.0.0.0`
 
@@ -262,7 +262,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/
 docker compose logs --tail=30
 ```
 
-Oczekiwane: HTTP 200 na GUI, serwer zdjęć odpowiada (404 lub 200 jeśli są pliki PNG).
+Oczekiwane: HTTP 200 na GUI, serwer zdjęć odpowiada (404 lub 200 jeśli są pliki JPG).
 
 **Czekaj na wynik testów od użytkownika.**
 
@@ -301,7 +301,7 @@ location /crm_product_images/ {
 
 Poproś użytkownika o dopisanie fragmentu do nginx i reload.
 
-**Test z przeglądarki:** `http://vs-web/product_photos/` i przykładowy link do PNG.
+**Test z przeglądarki:** `http://vs-web/product_photos/` i przykładowy link do JPG.
 
 **Czekaj na potwierdzenie.**
 
@@ -398,7 +398,7 @@ Dodaj do `README.md` sekcje:
 - **Wdrożenie na vs-web:** struktura `/opt/crm_product_photo/`, nginx, runner
 - **Zmiana sekretów:** edycja `/opt/crm_product_photo/.env` + `docker compose up -d --force-recreate`
 - **Logi:** `docker compose -f /opt/crm_product_photo/repo/docker-compose.yml logs -f`
-- **Linki do zdjęć w Excelu:** `http://vs-web/crm_product_images/KOD.png`
+- **Linki do zdjęć w Excelu:** `http://vs-web/crm_product_images/KOD.jpg`
 
 ---
 
