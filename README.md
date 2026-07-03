@@ -1,8 +1,8 @@
 # CRM Product Photo
 
-Eksport zdjęć produktów z Creatio CRM do JPG 800×800 oraz hosting HTTPS pod linki w Excelu.
+Eksport zdjęć produktów z Creatio CRM do JPG 800×800 oraz hosting pod linki w Excelu.
 
-**Produkcja:** `https://vs-web/product_photos/` (GUI) · `https://vs-web/crm_product_images/KOD.jpg` (zdjęcia)
+**Produkcja:** `https://vs-web/product_photos/` (GUI) · zdjęcia: `http://vs-web/crm_product_images/KOD.jpg` (Excel) lub `https://...` (przeglądarka — patrz sekcja *Certyfikat a Excel*)
 
 ## Uruchomienie lokalne
 
@@ -76,7 +76,23 @@ nano /opt/crm_product_photo/.env
 cd /opt/crm_product_photo/repo && docker compose up -d --force-recreate
 ```
 
-**Excel:** używaj `https://vs-web/crm_product_images/KOD.jpg`. Przy certyfikacie self-signed obrazy w Excelu mogą nie ładować się — potrzebny certyfikat zaufany w domenie Windows (CA firmowe).
+### Certyfikat a Excel
+
+Excel na Windows **nie ładuje obrazów z HTTPS**, jeśli certyfikat nie jest **zaufany w systemie** (jak przeglądarka nie ma przycisku „zaakceptuj wyjątek”). Na vs-web domyślnie jest certyfikat **snakeoil** (self-signed) — `curl -k` i przeglądarka mogą działać, **Excel nie pokaże zdjęcia** przy linku `https://vs-web/crm_product_images/...`.
+
+| Scenariusz | Link w Excelu | Uwagi |
+|----------|---------------|--------|
+| **Sieć wewnętrzna (teraz)** | `http://vs-web/crm_product_images/KOD.jpg` | Działa bez certyfikatu. Ustaw w `.env`: `PUBLIC_IMAGE_BASE_URL=http://vs-web/crm_product_images` |
+| **HTTPS w przeglądarce** | `https://vs-web/product_photos/` | OK przy snakeoil (ostrzeżenie certyfikatu) |
+| **HTTPS w Excelu** | `https://...` | Wymaga certyfikatu **zaufanego na PC użytkownika** |
+
+**Co działa na dłuższą metę (HTTPS w Excelu):**
+
+1. **Certyfikat z firmowego CA (zalecane)** — np. Active Directory Certificate Services. IT wystawia cert dla `vs-web` (lub firmowej FQDN), zaufanie CA rozdaje się przez GPO na komputery w domenie.
+2. **Certyfikat komercyjny na publiczną domenę** — tylko jeśli w Excelu używasz **tej samej nazwy** co w certyfikacie (np. `https://photos.trendglass.pl/...`). Publiczne CA **nie wydadzą** certyfikatu na samo wewnętrzne `vs-web` bez zweryfikowalnej domeny DNS.
+3. **Kupno certyfikatu „osobiście”** — ma sens wyłącznie przy **własnej domenie** i linkach w Excelu pod tą domeną; **nie naprawi** adresów `https://vs-web/...`.
+
+**Rekomendacja:** do czasu certyfikatu od IT — linki w arkuszach: **HTTP**; po wdrożeniu firmowego CA — **HTTPS** i aktualizacja `PUBLIC_IMAGE_BASE_URL` na `https://...`.
 
 ### CI/CD
 
@@ -107,7 +123,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8502/product_photos/
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8001/
 ```
 
-**Linki do zdjęć w Excelu:** `https://vs-web/crm_product_images/KOD.jpg` (np. `70056.jpg`)
+**Linki do zdjęć w Excelu:** `http://vs-web/crm_product_images/KOD.jpg` (np. `70056.jpg`). Po wdrożeniu zaufanego certyfikatu firmowego: `https://vs-web/crm_product_images/KOD.jpg`.
 
 **Usunięcie pobranych zdjęć (SSH):**
 
@@ -141,4 +157,4 @@ curl -s -o /dev/null -w "%{http_code}\n" https://vs-web/crm_product_images/70056
 
 Zobacz `.env.example` — wymagane: `BaseURI_IS`, `BaseURI`, `client_id`, `client_secret`, `grant_type`.
 
-Produkcja dodatkowo: `OUTPUT_DIR=/app/product_images`, `PUBLIC_IMAGE_BASE_URL=https://vs-web/crm_product_images`, `STREAMLIT_BASE_URL_PATH=product_photos`.
+Produkcja dodatkowo: `OUTPUT_DIR=/app/product_images`, `PUBLIC_IMAGE_BASE_URL=http://vs-web/crm_product_images` (Excel; przy firmowym CA można `https://`), `STREAMLIT_BASE_URL_PATH=product_photos`.
