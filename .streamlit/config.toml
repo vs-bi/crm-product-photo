@@ -6,3 +6,6 @@ textColor = "#141414"
 
 [browser]
 gatherUsageStats = false
+
+[server]
+baseUrlPath = "product_photos"

@@ -15,11 +15,16 @@ from loguru import logger
 from PIL import Image
 from tqdm import tqdm
 
-sys.path.append(r'C:\python_module')
-from logowanie import Job_failed, Job_success
+_firmowy_modul = Path(r'C:\python_module')
+if _firmowy_modul.is_dir():
+    sys.path.append(str(_firmowy_modul))
+try:
+    from logowanie import Job_failed, Job_success
+except ImportError:
+    from job_logging import Job_failed, Job_success
 
 EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
-OUTPUT_DIR = Path(r'L:\TGL Biura\Sprzedaż\SALES SUPPORT&DEVELOPMENT\product_photo')
+OUTPUT_DIR = Path(os.getenv('OUTPUT_DIR', str(Path(__file__).parent / 'product_images')))
 MAX_RETRIES = 3
 REQUEST_TIMEOUT = 60
 MAX_CONCURRENT = 8

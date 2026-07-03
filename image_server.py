@@ -29,6 +29,16 @@ def get_host_address():
         return socket.gethostname()
 
 
+def get_public_base_url(port=None):
+    """Publiczny URL serwera zdjęć (nginx) lub lokalny adres IP:port."""
+    public = os.getenv('PUBLIC_IMAGE_BASE_URL', '').strip().rstrip('/')
+    if public:
+        return public
+    if port is None:
+        port = int(os.getenv('IMAGE_SERVER_PORT', '8000'))
+    return f'http://{get_host_address()}:{port}'
+
+
 class ImageServer:
     """Zarządza cyklem życia serwera HTTP serwującego folder ze zdjęciami."""
 
@@ -54,7 +64,7 @@ class ImageServer:
     def base_url(self):
         if not self.is_running:
             return None
-        return f'http://{get_host_address()}:{self._port}'
+        return get_public_base_url(self._port)
 
     def start(self, directory, port):
         """Uruchamia serwer w wątku daemon; restartuje, jeśli już działa."""
