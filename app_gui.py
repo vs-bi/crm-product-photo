@@ -28,6 +28,12 @@ DEFAULT_OUTPUT_DIR = Path(os.getenv('OUTPUT_DIR', str(Path(__file__).parent / 'p
 DEFAULT_SERVER_PORT = int(os.getenv('IMAGE_SERVER_PORT', '8000'))
 IS_PRODUCTION_HOST = os.path.exists('/.dockerenv') or os.getenv('AUTO_START_IMAGE_SERVER') == '1'
 PUBLIC_IMAGE_BASE_URL = os.getenv('PUBLIC_IMAGE_BASE_URL', '').strip().rstrip('/')
+DEFAULT_PUBLIC_IMAGE_BASE_URL = 'http://vs-web/crm_product_images'
+
+
+def public_image_example_url():
+    base = PUBLIC_IMAGE_BASE_URL or DEFAULT_PUBLIC_IMAGE_BASE_URL
+    return f'{base}/KOD.jpg'
 
 # Kolory Trend Glass (brandbook 2.1 + rozbarwienia 2.2)
 BOTTLE_GREEN = '#134534'
@@ -262,15 +268,16 @@ def render_server_section(output_dir_text):
 
     st.divider()
     st.subheader('Hosting zdjęć (HTTP)')
-    st.caption('Udostępnia pliki z folderu docelowego pod adresem http://adres/KOD.jpg — np. do wyświetlania w Excelu.')
+    st.caption(
+        f'Udostępnia pliki z folderu docelowego pod adresem {public_image_example_url()} '
+        '— np. do wyświetlania w Excelu.'
+    )
 
     if IS_PRODUCTION_HOST:
         st.info(
             'Na serwerze produkcyjnym serwer HTTP startuje automatycznie z kontenerem '
             f'(folder: {output_dir_text.strip() or DEFAULT_OUTPUT_DIR}).'
         )
-        if PUBLIC_IMAGE_BASE_URL:
-            st.markdown(f'Publiczny adres zdjęć: **{PUBLIC_IMAGE_BASE_URL}/KOD.jpg**')
         return
 
     port = st.number_input('Port serwera', min_value=1, max_value=65535, value=DEFAULT_SERVER_PORT, step=1)
