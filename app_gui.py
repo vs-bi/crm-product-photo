@@ -28,7 +28,7 @@ DEFAULT_OUTPUT_DIR = Path(os.getenv('OUTPUT_DIR', str(Path(__file__).parent / 'p
 DEFAULT_SERVER_PORT = int(os.getenv('IMAGE_SERVER_PORT', '8000'))
 IS_PRODUCTION_HOST = os.path.exists('/.dockerenv') or os.getenv('AUTO_START_IMAGE_SERVER') == '1'
 PUBLIC_IMAGE_BASE_URL = os.getenv('PUBLIC_IMAGE_BASE_URL', '').strip().rstrip('/')
-DEFAULT_PUBLIC_IMAGE_BASE_URL = 'http://vs-web/crm_product_images'
+DEFAULT_PUBLIC_IMAGE_BASE_URL = 'https://vs-web/crm_product_images'
 
 
 def public_image_example_url():

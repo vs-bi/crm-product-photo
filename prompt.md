@@ -19,8 +19,8 @@ Użyj tego pliku jako promptu systemowego w nowej sesji Cursor. Twoim zadaniem j
 | Element | Wartość docelowa |
 |---------|------------------|
 | Serwer | `vs-web` (`10.0.101.22`), Debian, istniejące kontenery Docker |
-| GUI | `http://vs-web/product_photos/` (**ustalone** — `baseUrlPath = "product_photos"`) |
-| Zdjęcia | `http://vs-web/crm_product_images/KOD.jpg` (np. `70056.jpg`) |
+| GUI | `https://vs-web/product_photos/` (**ustalone** — `baseUrlPath = "product_photos"`) |
+| Zdjęcia | `https://vs-web/crm_product_images/KOD.jpg` (np. `70056.jpg`) |
 | Katalog na hoście | `/opt/crm_product_photo/` |
 | Sekrety | `/opt/crm_product_photo/.env` (poza git) |
 | Zdjęcia (trwałe) | `/opt/crm_product_photo/product_images/` → mount `/app/product_images` w kontenerze |
@@ -131,7 +131,7 @@ Zmiany do wprowadzenia (po akceptacji użytkownika):
 ```env
 OUTPUT_DIR=/app/product_images
 IMAGE_SERVER_PORT=8000
-PUBLIC_IMAGE_BASE_URL=http://vs-web/crm_product_images
+PUBLIC_IMAGE_BASE_URL=https://vs-web/crm_product_images
 STREAMLIT_BASE_URL_PATH=product_photos
 ```
 
@@ -270,7 +270,7 @@ Oczekiwane: HTTP 200 na GUI, serwer zdjęć odpowiada (404 lub 200 jeśli są pl
 
 ## KROK 5 — Nginx reverse proxy
 
-**Cel:** dostęp z sieci firmowej pod `http://vs-web/...`
+**Cel:** dostęp z sieci firmowej pod `https://vs-web/...`
 
 Utwórz `deploy/nginx-crm_product_photo.conf`:
 
@@ -301,7 +301,7 @@ location /crm_product_images/ {
 
 Poproś użytkownika o dopisanie fragmentu do nginx i reload.
 
-**Test z przeglądarki:** `http://vs-web/product_photos/` i przykładowy link do JPG.
+**Test z przeglądarki:** `https://vs-web/product_photos/` i przykładowy link do JPG.
 
 **Czekaj na potwierdzenie.**
 
@@ -385,7 +385,7 @@ Commit + push na `main`. **Czekaj na wynik workflow.**
 1. Wprowadź drobną widoczną zmianę (np. tekst w GUI).
 2. Commit → push → `main`.
 3. Obserwuj Actions → Deploy to vs-web.
-4. Zweryfikuj na `http://vs-web/product_photos/`.
+4. Zweryfikuj na `https://vs-web/product_photos/`.
 
 **Czekaj na potwierdzenie użytkownika.**
 
@@ -398,7 +398,7 @@ Dodaj do `README.md` sekcje:
 - **Wdrożenie na vs-web:** struktura `/opt/crm_product_photo/`, nginx, runner
 - **Zmiana sekretów:** edycja `/opt/crm_product_photo/.env` + `docker compose up -d --force-recreate`
 - **Logi:** `docker compose -f /opt/crm_product_photo/repo/docker-compose.yml logs -f`
-- **Linki do zdjęć w Excelu:** `http://vs-web/crm_product_images/KOD.jpg`
+- **Linki do zdjęć w Excelu:** `https://vs-web/crm_product_images/KOD.jpg`
 
 ---
 
@@ -409,7 +409,7 @@ Dodaj do `README.md` sekcje:
 | Port zajęty przy `docker compose up` | Wróć do kroku 0, wybierz inny port, zaktualizuj compose + nginx |
 | HTTP 502 z nginx | Sprawdź `docker ps`, logi kontenera, czy porty mapowane na `127.0.0.1` |
 | Brak zdjęć po eksporcie | Sprawdź mount wolumenu: `docker inspect crm_product_photo`, `ls /opt/crm_product_photo/product_images` |
-| Linki w GUI pokazują złe IP | Ustaw `PUBLIC_IMAGE_BASE_URL=http://vs-web/crm_product_images` w `.env` |
+| Linki w GUI pokazują złe IP | Ustaw `PUBLIC_IMAGE_BASE_URL=https://vs-web/crm_product_images` w `.env` |
 | Actions nie startuje | Runner offline lub brak etykiety `vs-web` |
 | Streamlit 404 pod ścieżką | `baseUrlPath` w config.toml i nginx muszą być zgodne (`product_photos`) |
 | Import `logowanie` failuje | Stub no-op w projekcie (krok 2) |

@@ -1,8 +1,8 @@
 # CRM Product Photo
 
-Eksport zdjęć produktów z Creatio CRM do JPG 800×800 oraz hosting HTTP pod linki w Excelu.
+Eksport zdjęć produktów z Creatio CRM do JPG 800×800 oraz hosting HTTPS pod linki w Excelu.
 
-**Produkcja:** `http://vs-web/product_photos/` (GUI) · `http://vs-web/crm_product_images/KOD.jpg` (zdjęcia)
+**Produkcja:** `https://vs-web/product_photos/` (GUI) · `https://vs-web/crm_product_images/KOD.jpg` (zdjęcia)
 
 ## Uruchomienie lokalne
 
@@ -40,7 +40,43 @@ cd /opt/crm_product_photo/repo
 docker compose build && docker compose up -d
 ```
 
-Nginx: fragment z `deploy/nginx-crm_product_photo.conf` w `/etc/nginx/sites-available/apps`.
+Nginx: fragment z `deploy/nginx-crm_product_photo.conf` w `/etc/nginx/sites-available/apps` — **w bloku port 80 i w bloku `listen 443 ssl`** (patrz sekcja HTTPS poniżej).
+
+### HTTPS
+
+TLS terminuje nginx na hoście (port 443). Kontener Docker pozostaje na HTTP wewnętrznym (`127.0.0.1:8001` / `8502`).
+
+**1. Diagnostyka (na vs-web):**
+
+```bash
+curl -k -s -o /dev/null -w "HTTPS root: %{http_code}\n" https://vs-web/
+curl -k -s -o /dev/null -w "HTTPS zdjęcia: %{http_code}\n" https://vs-web/crm_product_images/
+curl -s -o /dev/null -w "HTTP zdjęcia: %{http_code}\n" http://vs-web/crm_product_images/
+sudo grep -nE 'listen 443|ssl_certificate|crm_product_images|product_photos' /etc/nginx/sites-available/apps | head -40
+```
+
+Oczekiwane po konfiguracji: **HTTPS zdjęcia: 200** (lub 404 gdy folder pusty).
+
+**2. Nginx — location w bloku SSL:**
+
+Jeśli `https://vs-web/chatbot_dok/` działa, ale `https://vs-web/crm_product_images/` nie — skopiuj oba `location` z `deploy/nginx-crm_product_photo.conf` do bloku `server { listen 443 ssl; ... }` (często są już tylko w bloku port 80).
+
+```bash
+sudo nano /etc/nginx/sites-available/apps
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**3. Aplikacja — adres w linkach (`.env` na serwerze):**
+
+```bash
+nano /opt/crm_product_photo/.env
+# ustaw:
+# PUBLIC_IMAGE_BASE_URL=https://vs-web/crm_product_images
+
+cd /opt/crm_product_photo/repo && docker compose up -d --force-recreate
+```
+
+**Excel:** używaj `https://vs-web/crm_product_images/KOD.jpg`. Przy certyfikacie self-signed obrazy w Excelu mogą nie ładować się — potrzebny certyfikat zaufany w domenie Windows (CA firmowe).
 
 ### CI/CD
 
@@ -71,7 +107,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8502/product_photos/
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8001/
 ```
 
-**Linki do zdjęć w Excelu:** `http://vs-web/crm_product_images/KOD.jpg` (np. `70056.jpg`)
+**Linki do zdjęć w Excelu:** `https://vs-web/crm_product_images/KOD.jpg` (np. `70056.jpg`)
 
 **Usunięcie pobranych zdjęć (SSH):**
 
@@ -98,11 +134,11 @@ find /opt/crm_product_photo/product_images/ -maxdepth 1 -name '*.jpg' -delete
 Sprawdzenie, że plik zniknął (oczekiwane **404**):
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8001/70056.jpg
+curl -s -o /dev/null -w "%{http_code}\n" https://vs-web/crm_product_images/70056.jpg
 ```
 
 ## Zmienne środowiskowe
 
 Zobacz `.env.example` — wymagane: `BaseURI_IS`, `BaseURI`, `client_id`, `client_secret`, `grant_type`.
 
-Produkcja dodatkowo: `OUTPUT_DIR=/app/product_images`, `PUBLIC_IMAGE_BASE_URL=http://vs-web/crm_product_images`, `STREAMLIT_BASE_URL_PATH=product_photos`.
+Produkcja dodatkowo: `OUTPUT_DIR=/app/product_images`, `PUBLIC_IMAGE_BASE_URL=https://vs-web/crm_product_images`, `STREAMLIT_BASE_URL_PATH=product_photos`.
