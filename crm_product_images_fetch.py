@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import sys
@@ -24,6 +25,7 @@ except ImportError:
     from job_logging import Job_failed, Job_success
 
 EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
+MANIFEST_FILENAME = 'export_manifest.json'
 OUTPUT_DIR = Path(os.getenv('OUTPUT_DIR', str(Path(__file__).parent / 'product_images')))
 MAX_RETRIES = 3
 REQUEST_TIMEOUT = 60
@@ -158,6 +160,29 @@ def fetch_all_products_with_pictures(token_url, scan_progress=None, product_code
 
     logger.info(f'Znaleziono {len(products)} produktow ze zdjeciami')
     return products, access_token
+
+
+def load_previous_codes(output_dir):
+    """Zwraca zbior kodow z poprzedniego eksportu (pusty gdy brak/blad)."""
+    path = Path(output_dir) / MANIFEST_FILENAME
+    if not path.exists():
+        return set()
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+        return set(data.get('codes', []))
+    except Exception as e:
+        logger.warning(f'Nie udalo sie wczytac manifestu {path}: {e}')
+        return set()
+
+
+def save_export_manifest(output_dir, codes):
+    """Zapisuje aktualny zbior kodow z timestampem."""
+    path = Path(output_dir) / MANIFEST_FILENAME
+    payload = {
+        'exported_at': datetime.now().isoformat(timespec='seconds'),
+        'codes': sorted(codes),
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
 
 
 def sanitize_filename(code):
@@ -311,6 +336,8 @@ async def main():
         stats = {'saved': 0, 'errors': 0}
         access_token_holder = {'token': access_token}
         errors = []
+        saved_codes = []
+        previous_codes = load_previous_codes(OUTPUT_DIR)
         semaphore = threading.Semaphore(MAX_CONCURRENT)
         total = len(products)
 
@@ -339,17 +366,26 @@ async def main():
         for code, soon_value in soon_values:
             try:
                 success, error_msg = soon_value.value
-                if not success and error_msg:
+                if success:
+                    saved_codes.append(code)
+                elif error_msg:
                     errors.append(error_msg)
             except Exception as e:
                 stats['errors'] += 1
                 errors.append(f'Code={code}: {e}')
+
+        new_codes = sorted(set(saved_codes) - previous_codes)
+        if saved_codes:
+            save_export_manifest(OUTPUT_DIR, previous_codes | set(saved_codes))
 
         logger.info('=' * 60)
         logger.info('PODSUMOWANIE EKSPORTU ZDJEC')
         logger.info('=' * 60)
         logger.info(f'Produkty ze zdjeciami: {len(products)}')
         logger.success(f'Zapisane pliki JPG: {stats["saved"]}')
+        logger.info(f'Nowe zdjecia (KKT): {len(new_codes)}')
+        if new_codes:
+            logger.info(f'Nowe kody produktow: {", ".join(new_codes)}')
         if stats['errors']:
             logger.error(f'Bledy: {stats["errors"]}')
         logger.info(f'Czas wykonania: {datetime.now() - time_s}')

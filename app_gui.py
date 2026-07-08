@@ -186,6 +186,8 @@ def run_export(product_codes, output_dir, progress_area):
     total = len(products)
     saved = 0
     errors = []
+    saved_codes = []
+    previous_codes = core.load_previous_codes(output_dir)
 
     if total:
         token_holder = {'token': access_token}
@@ -203,6 +205,7 @@ def run_export(product_codes, output_dir, progress_area):
                 try:
                     future.result()
                     saved += 1
+                    saved_codes.append(product['Code'])
                 except Exception as e:
                     errors.append(f'Code={product["Code"]}, PictureId={product["PictureId"]}: {e}')
                 bar.progress(
@@ -212,10 +215,15 @@ def run_export(product_codes, output_dir, progress_area):
 
         bar.progress(1.0, text=f'Zakończono: {saved} zapisanych, {len(errors)} błędów')
 
+    new_codes = sorted(set(saved_codes) - previous_codes)
+    if saved_codes:
+        core.save_export_manifest(output_dir, previous_codes | set(saved_codes))
+
     return {
         'total': total,
         'saved': saved,
         'errors': errors,
+        'new_codes': new_codes,
         'duration': datetime.now() - started,
         'output_dir': str(output_dir),
     }
@@ -227,11 +235,13 @@ def render_summary(result):
     duration = str(result['duration']).split('.')[0]
     error_count = len(result['errors'])
     error_class = 'tg-metric error-alert' if error_count else 'tg-metric'
+    new_codes = result.get('new_codes', [])
     st.markdown(
         f"""
         <div class="tg-metrics">
           <div class="tg-metric"><div class="label">Produkty ze zdjęciami</div><div class="value">{result['total']}</div></div>
           <div class="tg-metric"><div class="label">Zapisane pliki JPG</div><div class="value">{result['saved']}</div></div>
+          <div class="tg-metric"><div class="label">Nowe zdjęcia (KKT)</div><div class="value">{len(new_codes)}</div></div>
           <div class="{error_class}"><div class="label">Błędy</div><div class="value">{error_count}</div></div>
           <div class="tg-metric"><div class="label">Czas trwania</div><div class="value">{duration}</div></div>
         </div>
@@ -252,6 +262,19 @@ def render_summary(result):
         with st.expander(f'Szczegóły błędów ({error_count})'):
             for msg in result['errors']:
                 st.write(msg)
+
+    if new_codes:
+        with st.expander(f'Nowe kody produktów ({len(new_codes)})', expanded=True):
+            st.caption('Zdjęcia produktów (KKT), które pojawiły się od ostatniego pobrania.')
+            st.write(', '.join(new_codes))
+            st.download_button(
+                'Pobierz listę (.txt)',
+                data='\n'.join(new_codes),
+                file_name='nowe_kkt.txt',
+                mime='text/plain',
+            )
+    else:
+        st.caption('Brak nowych zdjęć od ostatniego pobrania.')
 
     st.markdown(f'<p class="tg-info">Folder docelowy: {result["output_dir"]}</p>', unsafe_allow_html=True)
 
